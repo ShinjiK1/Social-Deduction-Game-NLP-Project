@@ -47,6 +47,8 @@ export default function Lobby({ room }) {
           disabled={!isHost} onChange={changeSetting('voteSeconds')} />
       </section>
 
+      <CategoryPicker room={room} isHost={isHost} onError={setError} />
+
       {error && <p className="error">{error}</p>}
       {isHost ? (
         <button type="button" className="primary" disabled={!canStart} onClick={start}>
@@ -56,6 +58,55 @@ export default function Lobby({ room }) {
         <p className="muted center">Waiting for the host to start…</p>
       )}
     </div>
+  );
+}
+
+function CategoryPicker({ room, isHost, onError }) {
+  const enabled = new Set(room.settings.categories);
+  const allNames = room.categories.map((c) => c.name);
+  const wordCount = room.categories.filter((c) => enabled.has(c.name)).reduce((sum, c) => sum + c.count, 0);
+
+  const save = async (categories) => {
+    const reply = await request('room:settings', { settings: { categories } });
+    onError(reply.ok ? '' : reply.error);
+  };
+
+  const toggle = (name) => {
+    const next = enabled.has(name) ? [...enabled].filter((c) => c !== name) : [...enabled, name];
+    save(next);
+  };
+
+  return (
+    <section className="card stack">
+      <div className="row spread">
+        <h2>Categories</h2>
+        {isHost && enabled.size < allNames.length && (
+          <button type="button" className="link" onClick={() => save(allNames)}>
+            Select all
+          </button>
+        )}
+      </div>
+      <p className="muted small">
+        {enabled.size} of {allNames.length} categories · {wordCount} words
+      </p>
+      <div className="category-grid">
+        {room.categories.map((c) => {
+          const checked = enabled.has(c.name);
+          return (
+            <label key={c.name} className={`category ${checked ? 'on' : ''}`}>
+              <input
+                type="checkbox"
+                checked={checked}
+                // Keep at least one category selected; the server enforces this too.
+                disabled={!isHost || (checked && enabled.size === 1)}
+                onChange={() => toggle(c.name)}
+              />
+              <span>{c.name}</span>
+            </label>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

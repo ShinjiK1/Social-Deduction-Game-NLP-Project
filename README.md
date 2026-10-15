@@ -7,6 +7,7 @@ take turns giving short hints (25 characters max), then vote on who the larper i
 ## Rules and scoring
 
 - 3–12 players (3-6 recommended). The turn order is shuffled once per game and kept for every round. The number of rounds can be set from 1 to 5.
+- The host picks which word categories are in play (all of them by default, at least one).
 - An innocent's hint can't contain the secret word. The larper's hints are never rejected, because a rejection would tell them they had hit the word (although the innocents would then know who the larper is from this anyways).
 - Voting: you can't vote for yourself, and votes can't be changed once locked in.
 - The larper is **caught** only if they alone have the most votes. **The larper wins ties.**
@@ -53,7 +54,7 @@ bump `RULES_VERSION` in `server/src/rooms.js`.
 server/src/index.js   Socket.IO event handlers and the static file server
 server/src/rooms.js   room and game state machine, per-player views, building the logged record
 server/src/text.js    hint and guess cleanup and word matching
-server/src/words.js   starter word list (13 categories, 25 words each)
+server/src/words.js   word list (15 categories, ~640 words) with alternate names blocked in hints
 server/src/db.js      Supabase logging with a local file fallback
 client/src/           React app (Home → Lobby → Game → Results)
 supabase/schema.sql   tables, the log_game RPC, and the transcripts view

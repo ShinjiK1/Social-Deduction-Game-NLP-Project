@@ -1,7 +1,7 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import { logGame } from './db.js';
 import { cleanHint, cleanName, revealsWord, sameWord } from './text.js';
-import { pickWord } from './words.js';
+import { CATEGORIES, pickWord } from './words.js';
 
 // Bump whenever a rule change would make new games incomparable with older ones in the dataset.
 export const RULES_VERSION = 1;
@@ -49,7 +49,7 @@ export class Room {
     this.onEmpty = onEmpty; // called once when the room should be deleted
     this.players = new Map(); // id -> player, in join order
     this.hostId = null;
-    this.settings = { ...DEFAULT_SETTINGS };
+    this.settings = { ...DEFAULT_SETTINGS, categories: CATEGORIES.map((c) => c.name) };
     this.phase = 'lobby'; // lobby | hints | voting | guess | results
     this.game = null;
     this.deadline = null;
@@ -180,6 +180,12 @@ export class Room {
   updateSettings(playerId, patch) {
     this.requireHost(playerId);
     if (this.isActive()) throw new GameError("Settings can't change during a game.");
+    if (patch?.categories !== undefined) {
+      const wanted = new Set(Array.isArray(patch.categories) ? patch.categories : []);
+      const categories = CATEGORIES.map((c) => c.name).filter((name) => wanted.has(name));
+      if (categories.length === 0) throw new GameError('Pick at least one category.');
+      this.settings.categories = categories;
+    }
     for (const [key, [min, max]] of Object.entries(SETTING_RANGES)) {
       const value = Math.round(Number(patch?.[key]));
       if (patch?.[key] === undefined || !Number.isFinite(value)) continue;
@@ -205,7 +211,7 @@ export class Room {
     if (participants.length < MIN_PLAYERS) {
       throw new GameError(`You need at least ${MIN_PLAYERS} connected players to start.`);
     }
-    const { word, category } = pickWord(this.usedWords);
+    const { word, aliases, category } = pickWord(this.usedWords, this.settings.categories);
     this.usedWords.add(word);
     this.game = {
       participants, // seat number = index here (join order)
@@ -213,6 +219,7 @@ export class Room {
       turnOrder: shuffle(participants),
       larperId: participants[randomInt(participants.length)],
       word,
+      aliases, // other names for the word: blocked in hints, accepted as guesses
       category,
       settings: { ...this.settings },
       startedAt: new Date(),
@@ -253,7 +260,8 @@ export class Room {
     if (!text) throw new GameError('Type a hint first.');
     if (text.length > MAX_HINT_LENGTH) throw new GameError(`Hints can be at most ${MAX_HINT_LENGTH} characters.`);
     // Only innocents are blocked: rejecting the larper's hint would tell them they'd found the word.
-    if (playerId !== this.game.larperId && revealsWord(text, this.game.word)) {
+    const { larperId, word, aliases } = this.game;
+    if (playerId !== larperId && [word, ...aliases].some((name) => revealsWord(text, name))) {
       throw new GameError("Your hint can't contain the secret word!");
     }
     this.recordHint(text);
@@ -336,7 +344,8 @@ export class Room {
     this.clearTimer();
     const g = this.game;
     const caught = g.voteOutcome === 'caught';
-    const guessCorrect = caught && g.guess !== null && sameWord(g.guess, g.word);
+    const guessCorrect =
+      caught && g.guess !== null && [g.word, ...g.aliases].some((name) => sameWord(g.guess, name));
     const deltas = {};
     for (const id of g.participants) {
       if (id === g.larperId) deltas[id] = caught ? (guessCorrect ? 0.5 : 0) : 1;
@@ -429,6 +438,7 @@ export class Room {
       hostId: this.hostId,
       settings: this.settings,
       limits: { minPlayers: MIN_PLAYERS, maxPlayers: MAX_PLAYERS, maxHintLength: MAX_HINT_LENGTH },
+      categories: CATEGORIES, // every category the room can choose from, with word counts
       serverNow: Date.now(),
       deadline: this.deadline,
       players: [...this.players.values()].map((p) => ({
