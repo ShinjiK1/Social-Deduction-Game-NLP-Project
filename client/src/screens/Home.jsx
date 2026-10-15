@@ -1,10 +1,9 @@
 import { useState } from 'react';
+import Consent from '../components/Consent.jsx';
 
 export default function Home({ onEnter, notice }) {
   const [name, setName] = useState('');
-  const [code, setCode] = useState(
-    () => new URLSearchParams(window.location.search).get('room')?.toUpperCase() ?? '',
-  );
+  const [code, setCode] = useState('');
   const [consented, setConsented] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -41,14 +40,7 @@ export default function Home({ onEnter, notice }) {
           />
         </label>
 
-        <label className="consent">
-          <input type="checkbox" checked={consented} onChange={(e) => setConsented(e.target.checked)} />
-          <span>
-            Hints and votes from your games are saved anonymously for a research project on
-            detecting deception in text. Your name is never stored. Please don't type personal
-            information in hints.
-          </span>
-        </label>
+        <Consent checked={consented} onChange={setConsented} />
 
         {(error || notice) && <p className="error">{error || notice}</p>}
 

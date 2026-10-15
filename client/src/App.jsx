@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Game from './screens/Game.jsx';
 import Home from './screens/Home.jsx';
+import Invite from './screens/Invite.jsx';
 import Lobby from './screens/Lobby.jsx';
 import Results from './screens/Results.jsx';
 import { clearSession, loadSession, request, saveSession, socket } from './socket.js';
@@ -9,6 +10,7 @@ export default function App() {
   const [room, setRoom] = useState(null);
   const [connected, setConnected] = useState(socket.connected);
   const [notice, setNotice] = useState('');
+  const [inviteCode, setInviteCode] = useState(readInviteCode);
 
   useEffect(() => {
     const onState = (state) => {
@@ -45,8 +47,15 @@ export default function App() {
     if (reply.ok) {
       saveSession({ code: reply.code, token: reply.token });
       setNotice('');
+      dismissInvite();
     }
     return reply;
+  };
+
+  // Drop ?room= from the URL so leaving the room later lands on the normal home page.
+  const dismissInvite = () => {
+    setInviteCode(null);
+    window.history.replaceState(null, '', window.location.pathname);
   };
 
   const leave = async () => {
@@ -56,7 +65,9 @@ export default function App() {
   };
 
   let screen;
-  if (!room) screen = <Home onEnter={enter} notice={notice} />;
+  if (!room && inviteCode) {
+    screen = <Invite code={inviteCode} onEnter={enter} onDismiss={dismissInvite} notice={notice} />;
+  } else if (!room) screen = <Home onEnter={enter} notice={notice} />;
   else if (room.phase === 'lobby') screen = <Lobby room={room} />;
   else if (room.phase === 'results') screen = <Results room={room} />;
   else screen = <Game room={room} />;
@@ -78,4 +89,9 @@ export default function App() {
       <main>{screen}</main>
     </div>
   );
+}
+
+function readInviteCode() {
+  const code = new URLSearchParams(window.location.search).get('room')?.toUpperCase() ?? '';
+  return /^[A-Z]{4}$/.test(code) ? code : null;
 }
