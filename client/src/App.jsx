@@ -64,7 +64,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <span className="logo">Larper</span>
+        <span className="logo">Catch The Larper</span>
         {room && <span className="room-code">Room {room.code}</span>}
         <span className={`status ${connected ? 'online' : 'offline'}`}>
           {connected ? 'Connected' : 'Reconnecting…'}

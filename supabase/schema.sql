@@ -1,4 +1,4 @@
--- Larper game data schema. Run once in the Supabase SQL editor.
+-- Catch The Larper game data schema. Run once in the Supabase SQL editor.
 -- Players are identified only by seat number (per game) and a random anon_id (per room session).
 -- No nicknames are ever stored.
 

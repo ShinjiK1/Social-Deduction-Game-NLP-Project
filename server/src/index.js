@@ -115,4 +115,4 @@ io.on('connection', (socket) => {
   });
 });
 
-httpServer.listen(PORT, () => console.log(`Larper server listening on http://localhost:${PORT}`));
+httpServer.listen(PORT, () => console.log(`Catch The Larper server listening on http://localhost:${PORT}`));

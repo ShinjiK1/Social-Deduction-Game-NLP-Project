@@ -58,7 +58,8 @@ p {
 .topbar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 4px 12px;
   padding: 12px 0;
 }
 
@@ -66,6 +67,7 @@ p {
   font-weight: 800;
   font-size: 1.25rem;
   letter-spacing: 0.02em;
+  white-space: nowrap;
   margin-right: auto;
 }
 
