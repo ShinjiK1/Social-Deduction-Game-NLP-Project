@@ -49,6 +49,8 @@ export default function Lobby({ room }) {
 
       <CategoryPicker room={room} isHost={isHost} onError={setError} />
 
+      {room.devMode && <DevDataToggle room={room} isHost={isHost} />}
+
       {error && <p className="error">{error}</p>}
       {isHost ? (
         <button type="button" className="primary" disabled={!canStart} onClick={start}>
@@ -106,6 +108,27 @@ function CategoryPicker({ room, isHost, onError }) {
           );
         })}
       </div>
+    </section>
+  );
+}
+
+// Only shown when the server runs with `npm run dev`; the server ignores this setting otherwise.
+function DevDataToggle({ room, isHost }) {
+  const on = room.settings.devData;
+  return (
+    <section className="card stack">
+      <label className="field inline">
+        <span>Save to dev tables</span>
+        <input
+          type="checkbox"
+          checked={on}
+          disabled={!isHost}
+          onChange={(e) => request('room:settings', { settings: { devData: e.target.checked } })}
+        />
+      </label>
+      <p className="muted small">
+        Dev server only. {on ? 'Games are saved to dev_games, dev_game_players and dev_hints.' : 'Games are saved to the real dataset.'}
+      </p>
     </section>
   );
 }

@@ -33,6 +33,14 @@ If you refresh a page, you go back to the same seat.
 If Supabase isn't configured or an insert fails, finished games are appended to
 `server/data/games.jsonl`, so no data is lost.
 
+### Dev tables
+
+When the server runs with `npm run dev`, the lobby shows a **Save to dev tables** toggle (on by
+default, host-only). While it's on, that room's games go to `dev_games`, `dev_game_players` and
+`dev_hints` (plus the `dev_game_transcripts` view) instead of the real dataset, or to
+`server/data/games.dev.jsonl` as the fallback. Run `supabase/dev_schema.sql` once, after
+`schema.sql`, to create them. `npm start` never shows the toggle and always logs to the real tables.
+
 ## Data collected
 
 Nicknames are never stored. Each finished game is written to three tables:
@@ -58,4 +66,5 @@ server/src/words.js   word list (15 categories, ~640 words) with alternate names
 server/src/db.js      Supabase logging with a local file fallback
 client/src/           React app (Home → Lobby → Game → Results)
 supabase/schema.sql   tables, the log_game RPC, and the transcripts view
+supabase/dev_schema.sql  dev_* copies of the tables, the log_dev_game RPC, and its transcripts view
 ```

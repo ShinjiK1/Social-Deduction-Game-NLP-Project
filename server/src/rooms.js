@@ -3,6 +3,9 @@ import { logGame } from './db.js';
 import { cleanHint, cleanName, revealsWord, sameWord } from './text.js';
 import { CATEGORIES, pickWord } from './words.js';
 
+// Set by `npm run dev`. Lets the host send a room's games to the dev_* tables instead of the dataset.
+export const DEV_MODE = process.argv.includes('--dev');
+
 // Bump whenever a rule change would make new games incomparable with older ones in the dataset.
 export const RULES_VERSION = 1;
 
@@ -50,6 +53,7 @@ export class Room {
     this.players = new Map(); // id -> player, in join order
     this.hostId = null;
     this.settings = { ...DEFAULT_SETTINGS, categories: CATEGORIES.map((c) => c.name) };
+    if (DEV_MODE) this.settings.devData = true; // local test games stay out of the real dataset by default
     this.phase = 'lobby'; // lobby | hints | voting | guess | results
     this.game = null;
     this.deadline = null;
@@ -186,6 +190,7 @@ export class Room {
       if (categories.length === 0) throw new GameError('Pick at least one category.');
       this.settings.categories = categories;
     }
+    if (DEV_MODE && typeof patch?.devData === 'boolean') this.settings.devData = patch.devData;
     for (const [key, [min, max]] of Object.entries(SETTING_RANGES)) {
       const value = Math.round(Number(patch?.[key]));
       if (patch?.[key] === undefined || !Number.isFinite(value)) continue;
@@ -358,7 +363,7 @@ export class Room {
     this.phase = 'results';
     for (const p of this.players.values()) if (!p.connected) this.scheduleRemoval(p);
     this.broadcast();
-    logGame(this.buildRecord()).catch((err) => console.error('Failed to log game:', err));
+    logGame(this.buildRecord(), { dev: g.settings.devData === true }).catch((err) => console.error('Failed to log game:', err));
   }
 
   /** The anonymized record saved for the dataset. Players are identified by seat, never by name. */
@@ -436,6 +441,7 @@ export class Room {
       phase: this.phase,
       meId: playerId,
       hostId: this.hostId,
+      devMode: DEV_MODE,
       settings: this.settings,
       limits: { minPlayers: MIN_PLAYERS, maxPlayers: MAX_PLAYERS, maxHintLength: MAX_HINT_LENGTH },
       categories: CATEGORIES, // every category the room can choose from, with word counts
