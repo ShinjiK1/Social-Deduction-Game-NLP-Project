@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import HintBoard from '../components/HintBoard.jsx';
-import { request } from '../socket.js';
+import { request, socket } from '../socket.js';
 import { useCountdown } from '../useCountdown.js';
 
 export default function Game({ room }) {
@@ -75,7 +75,7 @@ function RoleCard({ game }) {
 }
 
 /** Single-line text submit used for hints and guesses. */
-function TextSubmit({ event, placeholder, buttonLabel, maxLength }) {
+function TextSubmit({ event, draftEvent, placeholder, buttonLabel, maxLength }) {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -101,6 +101,8 @@ function TextSubmit({ event, placeholder, buttonLabel, maxLength }) {
           onChange={(e) => {
             setText(e.target.value);
             setError('');
+            // The server submits the last draft it received if the timer runs out.
+            if (draftEvent) socket.emit(draftEvent, { text: e.target.value });
           }}
         />
         <button type="submit" className="primary" disabled={!text.trim() || busy}>
@@ -120,7 +122,7 @@ function TextSubmit({ event, placeholder, buttonLabel, maxLength }) {
 }
 
 function HintInput({ maxLength }) {
-  return <TextSubmit event="game:hint" placeholder="Your hint" buttonLabel="Submit" maxLength={maxLength} />;
+  return <TextSubmit event="game:hint" draftEvent="game:hintDraft" placeholder="Your hint" buttonLabel="Submit" maxLength={maxLength} />;
 }
 
 function GuessPanel() {

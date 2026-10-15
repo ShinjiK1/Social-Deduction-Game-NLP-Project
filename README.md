@@ -49,7 +49,7 @@ Nicknames are never stored. Each finished game is written to three tables:
 |---|---|
 | `games` | `session_id` (one per room, shared by all of that room's games), word, category, settings, `larper_seat`, `vote_outcome` (`caught` / `tie` / `missed` / `no_votes`), the larper's guess |
 | `game_players` | one row per seat: `is_larper`, `turn_position`, `vote_for_seat`, `score_delta`, `anon_id` |
-| `hints` | `round`, `turn_index`, `seat`, `text` (null if the player timed out), `ms_to_submit` |
+| `hints` | `round`, `turn_index`, `seat`, `text`, `timed_out`, `ms_to_submit` (null if timed out). On a timeout, `text` is whatever was in the box, or `''` if it was empty (null before `rules_version` 2) |
 
 `anon_id` stays the same for one player across all games in a room session. Use it to keep the
 same people out of both the train and test sets. The `game_transcripts` view gives one row per

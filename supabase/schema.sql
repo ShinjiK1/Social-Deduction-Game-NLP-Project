@@ -36,7 +36,7 @@ create table if not exists public.hints (
   round         int not null, -- 1-based
   turn_index    int not null, -- 0-based position within the round
   seat          int not null,
-  text          text, -- null when the player ran out of time
+  text          text, -- typed-but-unsubmitted text when timed_out ('' if the box was empty; null in rules_version 1)
   timed_out     boolean not null,
   ms_to_submit  int,
   primary key (game_id, round, turn_index)

@@ -32,8 +32,8 @@ export default function HintBoard({ room, larperId = null }) {
                   return <td key={r} className="pending">{typing ? 'typing…' : ''}</td>;
                 }
                 return (
-                  <td key={r} className={hint.timedOut ? 'pending' : ''}>
-                    {hint.timedOut ? '(no hint)' : hint.text}
+                  <td key={r} className={hint.text ? '' : 'pending'}>
+                    {hint.text || '(no hint)'}
                   </td>
                 );
               })}

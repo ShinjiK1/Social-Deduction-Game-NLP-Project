@@ -100,6 +100,11 @@ io.on('connection', (socket) => {
     room.submitHint(playerId, text);
   });
 
+  handle('game:hintDraft', ({ text }) => {
+    const { room, playerId } = current();
+    room.saveDraft(playerId, text);
+  });
+
   handle('game:vote', ({ targetId }) => {
     const { room, playerId } = current();
     room.submitVote(playerId, targetId);

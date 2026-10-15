@@ -7,7 +7,7 @@ import { CATEGORIES, pickWord } from './words.js';
 export const DEV_MODE = process.argv.includes('--dev');
 
 // Bump whenever a rule change would make new games incomparable with older ones in the dataset.
-export const RULES_VERSION = 1;
+export const RULES_VERSION = 2; // 2: a timed-out hint submits whatever was typed
 
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 12;
@@ -254,7 +254,8 @@ export class Room {
       ? g.settings.hintSeconds
       : Math.min(DISCONNECTED_TURN_SECONDS, g.settings.hintSeconds);
     g.turnStartedAt = Date.now();
-    this.setTimer(seconds, () => this.recordHint(null));
+    g.draft = '';
+    this.setTimer(seconds, () => this.timeOutHint());
     this.broadcast();
   }
 
@@ -264,24 +265,38 @@ export class Room {
     const text = cleanHint(raw);
     if (!text) throw new GameError('Type a hint first.');
     if (text.length > MAX_HINT_LENGTH) throw new GameError(`Hints can be at most ${MAX_HINT_LENGTH} characters.`);
-    // Only innocents are blocked: rejecting the larper's hint would tell them they'd found the word.
-    const { larperId, word, aliases } = this.game;
-    if (playerId !== larperId && [word, ...aliases].some((name) => revealsWord(text, name))) {
-      throw new GameError("Your hint can't contain the secret word!");
-    }
-    this.recordHint(text);
+    if (this.revealsSecret(playerId, text)) throw new GameError("Your hint can't contain the secret word!");
+    this.recordHint(text, false);
   }
 
-  /** Records the current player's hint (null = ran out of time) and moves to the next turn. */
-  recordHint(text) {
+  /** Remembers what the current player has typed so far, to submit if their time runs out. */
+  saveDraft(playerId, raw) {
+    if (this.phase !== 'hints' || playerId !== this.currentTurnId()) return;
+    this.game.draft = cleanHint(raw).slice(0, MAX_HINT_LENGTH);
+  }
+
+  timeOutHint() {
+    const text = this.game.draft;
+    // A draft an innocent couldn't have submitted is dropped, the same as an empty box.
+    this.recordHint(this.revealsSecret(this.currentTurnId(), text) ? '' : text, true);
+  }
+
+  // Only innocents are blocked: rejecting the larper's hint would tell them they'd found the word.
+  revealsSecret(playerId, text) {
+    const { larperId, word, aliases } = this.game;
+    return playerId !== larperId && [word, ...aliases].some((name) => revealsWord(text, name));
+  }
+
+  /** Records the current player's hint ('' = ran out of time with nothing typed) and moves to the next turn. */
+  recordHint(text, timedOut) {
     const g = this.game;
     g.hints.push({
       round: g.round,
       turnIndex: g.turnIndex,
       playerId: this.currentTurnId(),
       text,
-      timedOut: text === null,
-      msToSubmit: text === null ? null : Date.now() - g.turnStartedAt,
+      timedOut,
+      msToSubmit: timedOut ? null : Date.now() - g.turnStartedAt,
     });
     g.turnIndex++;
     if (g.turnIndex >= g.turnOrder.length) {
