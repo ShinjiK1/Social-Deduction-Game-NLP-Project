@@ -4,7 +4,17 @@ An online social deduction game used to collect hint data for training an impost
 Every player gets the same secret word except the **larper**, who only sees the category. Players
 take turns giving short hints (25 characters max), then vote on who the larper is.
 
-## Rules and scoring
+Play it at **https://catchthelarper.com**.
+
+## How to play
+
+1. Everyone gets the same secret word except one player, the **larper**, who only sees its category.
+2. Players take turns giving a short hint (25 characters max) for a few rounds. Don't say the word itself.
+3. Everyone votes for who they think the larper is.
+4. If the larper alone gets the most votes, they're caught and each innocent scores +1. The larper then gets one guess at the word for +0.5.
+5. Otherwise the larper scores +1. The larper wins ties.
+
+## Rules and scoring (details)
 
 - 3–12 players (3-6 recommended). The turn order is shuffled once per game and kept for every round. The number of rounds can be set from 1 to 5.
 - The host picks which word categories are in play (all of them by default, at least one).
