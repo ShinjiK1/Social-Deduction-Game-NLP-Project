@@ -22,9 +22,25 @@ export default function Home({ onEnter, notice }) {
     <div className="stack">
       <section className="card">
         <h1>Find the larper</h1>
-        <p className="muted">
-          Everyone gets the same secret word except one player, the <strong>larper</strong>, who
-          only knows the category. Take turns giving short hints, then vote on who's faking it.
+        <ol className="rules">
+          <li>
+            Everyone gets the same secret word except one player, the <strong>larper</strong>, who
+            only sees its category.
+          </li>
+          <li>
+            Players take turns giving a short hint (25 characters max) for a few rounds. Don't say
+            the word itself.
+          </li>
+          <li>Everyone votes for who they think the larper is.</li>
+          <li>
+            If the larper alone gets the most votes, they're caught and each innocent scores +1.
+            The larper then gets one guess at the word for +0.5.
+          </li>
+          <li>Otherwise the larper scores +1. The larper wins ties.</li>
+        </ol>
+        <p className="muted small">
+          Tip: be specific enough to prove you know the word, but vague enough that the larper
+          can't figure it out.
         </p>
       </section>
 
